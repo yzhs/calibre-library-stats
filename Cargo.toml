@@ -1,0 +1,10 @@
+[package]
+authors = ["Colin Benner <colin@yzhs.de>"]
+name = "library-stats"
+version = "0.1.0"
+
+[dependencies]
+handlebars = "0.29.1"
+serde = "1.0.27"
+serde_derive = "1.0.27"
+sqlite = "0.23.9"
