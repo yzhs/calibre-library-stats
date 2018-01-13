@@ -22,8 +22,6 @@ const fkg          = "custom_column_8";
 const gfi          = "custom_column_9";
 const fre          = "custom_column_10";
 const read         = "custom_column_11";
-const readin       = "custom_column_16";
-const readin_link  = "books_custom_column_16_link";
 
 # How many pages an entry has to have to count as a book
 const min_words = 10_000;
@@ -33,11 +31,11 @@ const min_pages = 100;
 #
 # Query the database
 #
-const available_columns = [:books, :pages, :words, :lang, :read, :readin]
+const available_columns = [:books, :pages, :words, :lang, :read]
 
 const column_map = Dict([(:books, "COUNT(*)"), (:pages, "SUM($pages.value)"),
 (:words, "SUM($words.value)"), (:lang, "languages.lang_code"),
-(:read, "$read.value"), (:readin, "$readin.value")])
+(:read, "$read.value")])
 
 const all_stats   = "COUNT(*), SUM($pages.value), SUM(ifnull($words.value, 0))"
 const all_columns = "$all_stats, languages.lang_code, $read.value"
@@ -56,8 +54,6 @@ JOIN languages               ON books_languages_link.lang_code = languages.id
 JOIN $pages                  ON books.id                       = $pages.book
 LEFT OUTER JOIN $read        ON books.id                       = $read.book
 LEFT OUTER JOIN $words       ON books.id                       = $words.book
-LEFT OUTER JOIN $readin_link ON books.id                       = $readin_link.book
-LEFT OUTER JOIN $readin      ON $readin_link.value             = $readin.id
 """
 
 # Construct a query string and execute the query, returning a dataframe without
@@ -65,7 +61,6 @@ LEFT OUTER JOIN $readin      ON $readin_link.value             = $readin.id
 function query(columns   :: Array{Symbol, 1},
                condition :: Union{String, Array{String}},
                group_by  :: Union{String, Array{String}})
-  nullable_to_na(x) = isnull(x) ? NA : get(x)
   select = map(x -> column_map[x], columns)
 
   # Build the query string
@@ -93,7 +88,9 @@ function query(columns   :: Array{Symbol, 1},
   # Polish the resulting DataFrame
   names!(foo, columns)
   for col in columns
-    foo[col] = convert(Array, map(nullable_to_na, foo[col]))
+    tmp = foo[col]
+    tmp[tmp.isnull] = NA
+    foo[col] = convert(Array, tmp)
   end
   foo
 end
@@ -140,7 +137,7 @@ end
 
 
 read_short_works = @where(short_works, !isna(:read))
-read_long_works = long_works[!long_works[:read].na, :]
+read_long_works = long_works[.!long_works[:read].na, :]
 
 df = read_long_works
 read_english_books = @where(read_long_works, :lang .== "eng", :read .== 1)
@@ -261,6 +258,39 @@ close(file)
 
 display(output)
 
+# Produce a list of all the txt files of books that I have finished.
+function toarray(df)
+  return convert(Array{String}, map(x -> isnull(x) ? NA : get(x), df))
+end
+query_string = """SELECT path, title, name FROM $read
+LEFT JOIN books ON $read.book = books.id
+LEFT JOIN books_authors_link ON books_authors_link.book = books.id
+LEFT JOIN authors ON books_authors_link.author = authors.id
+;"""
+
+foo = SQLite.query(db, query_string);
+
+library_path = expanduser("~/books/non-fiction/")
+file = open(expanduser("~/prj/library-stats/read_books_list.txt"), "w")
+write(file, )
+for i in 1:size(foo, 1)
+  line = foo[i, :]
+  dir_path = get(line[:path][1])
+  author = normalize_string(get(line[:name][1]), stripmark=true)
+  if !contains(dir_path, author)
+    continue
+  end
+  title = get(line[:title][1])
+  title = replace(title, "…", "_.")
+  title = replace(title, "½", "1_2")
+  title = normalize_string(title, stripmark=true)
+  path = rstrip(title[1:min(42, length(title))]) * " - " * author * ".txt\n"
+  path = replace(path, Set([':' '/' '?']), "_")
+  path = library_path * dir_path * "/" * path
+  print(path)
+  write(file, path)
+end
+close(file)
 
 #
 # Write the set of all words (whitespace separated strings) from all the books
