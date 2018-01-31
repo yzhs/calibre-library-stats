@@ -5,21 +5,21 @@ description = "A brief analysis of my book collection"
 title = "Library statistics"
 +++
 
-My library currently contains a total of {{all.works}} pieces of writing (novels, novellas, short stories, text books, etc.) with an estimated {{all.pages}} pages.  These contain more then {{all.words}} words.  That includes the number of words in works which can be easily counted, e.g. EPUB files, and unreliable – mostly too low – word counts of PDF or DJVU files.
+My library currently contains a total of {{stats.all.works}} pieces of writing (novels, novellas, short stories, text books, etc.) with an estimated {{stats.all.pages}} pages.  These contain more then {{stats.all.words}} words.  That includes the number of words in works which can be easily counted, e.g. EPUB files, and unreliable – mostly too low – word counts of PDF or DJVU files.
 
 Of these I have read
 
-  * {{read.long.works}} books, {{read.long.pages}} pages, {{read.long.words}} in total;
-  * {{english.read.long.works}} books, {{english.read.long.pages}} pages, {{english.read.long.words}} words in English;
-  * {{german.read.long.works}} books, {{german.read.long.pages}} pages, {{german.read.long.words}} words in German; and
-  * {{english.read.short.works}} works of less than {{min_words}} words and less than {{min_pages}} pages in English, totalling {{english.read.short.pages}} pages, and {{english.read.short.words}} words.
+  * {{stats.read_long.works}} books, {{stats.read_long.pages}} pages, {{stats.read_long.words}} in total;
+  * {{stats.eng_read_long.works}} books, {{stats.eng_read_long.pages}} pages, {{stats.eng_read_long.words}} words in English;
+  * {{stats.deu_read_long.works}} books, {{stats.deu_read_long.pages}} pages, {{stats.deu_read_long.words}} words in German; and
+  * {{stats.eng_read_short.works}} works of less than {{min_words}} words and less than {{min_pages}} pages in English, totalling {{stats.eng_read_short.pages}} pages, and {{stats.eng_read_short.words}} words.
 
-Thus, in total, I have read {{all.read.works}} works consisting of {{all.read.works}} pages and {{all.read.works}} words.
+Thus, in total, I have read {{stats.read.works}} works consisting of {{stats.read.works}} pages and {{stats.read.works}} words.
 
 ## All languages
 
 | Status    | Books               | Pages               | Words               |
 |:----------|--------------------:|--------------------:|--------------------:|
-| All       | {{what.works}}      | {{what.pages}}      | {{what.words}}      |
-| Read      | {{what.read.works}} | {{what.read.pages}} | {{what.read.words}} |
+| All       | {{stats.what.works}}      | {{stats.what.pages}}      | {{stats.what.words}}      |
+| Read      | {{stats.what.read.works}} | {{stats.what.read.pages}} | {{stats.what.read.words}} |
 | *Percent* | *foo%*              | *foo%*              | *foo%*              |

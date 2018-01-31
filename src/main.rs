@@ -5,6 +5,7 @@ extern crate handlebars;
 extern crate sqlite;
 
 use std::collections::BTreeMap;
+use std::ops::Add;
 use std::path::PathBuf;
 
 const LIBRARY_PATH: &str = "books/non-fiction";
@@ -37,6 +38,17 @@ struct Stats {
     works: u32,
     pages: u32,
     words: u64,
+}
+
+impl Add for Stats {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        Stats {
+            works: self.works + other.works,
+            pages: self.pages + other.pages,
+            words: self.words + other.words,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -78,15 +90,11 @@ impl From<Option<i64>> for Read {
 }
 
 impl Stats {
-    fn from_query<S: AsRef<str>>(
-        db: &sqlite::Connection,
-        condition: S,
-    ) -> Vec<(bool, Language, Read, Stats)> {
-        // is_short_work = "($words.value < $min_words OR $words.value IS NULL AND $pages.value < $min_pages)"
-        // is_long_work = "($words.value >= $min_words OR ($words.value IS NULL AND $pages.value >= $min_pages))"
+    fn query_db<S: AsRef<str>>(db: &sqlite::Connection, condition: S) -> Stats {
         let query = format!(
             "SELECT \
-                {pages}.value >= {min_pages} OR ifnull({words}.value, 0) >= {min_words} AS is_long, \
+                {pages}.value >= {min_pages} OR
+                    ifnull({words}.value, 0) >= {min_words} AS is_long, \
                 languages.lang_code AS lang, \
                 {read}.value AS read, \
                 COUNT(*) AS works, \
@@ -98,7 +106,6 @@ impl Stats {
              JOIN {pages} ON books.id = {pages}.book \
              LEFT OUTER JOIN {read} ON books.id = {read}.book \
              LEFT OUTER JOIN {words} ON books.id = {words}.book \
-             GROUP BY lang, read, is_long \
              {condition}
             ",
             words = tables::WORDS,
@@ -106,36 +113,83 @@ impl Stats {
             read = tables::READ,
             min_pages = MIN_PAGES,
             min_words = MIN_WORDS,
-            condition = condition.as_ref(),
+            condition = condition.as_ref()
         );
 
         let mut cursor = db.prepare(query)
             .expect("Failed to prepare statement")
             .cursor();
 
-        let mut result = vec![];
+        let mut result = Default::default();
         while let Some(row) = cursor.next().expect("SQL error") {
-            let is_long = row[0].as_integer().unwrap() == 1;
-            let lang = Language::from(row[1].as_string().unwrap());
-            let read = Read::from(row[2].as_integer());
             let stats = Stats {
                 works: row[3].as_integer().unwrap() as u32,
                 pages: row[4].as_integer().unwrap() as u32,
                 words: row[5].as_integer().unwrap() as u64,
             };
-            result.push((is_long, lang, read, stats));
+            result = result + stats;
         }
-        println!("{:?}", result);
+
         result
     }
 }
 
-fn setup() -> sqlite::Result<sqlite::Connection> {
+impl std::default::Default for Stats {
+    fn default() -> Self {
+        Stats {
+            works: 0,
+            pages: 0,
+            words: 0,
+        }
+    }
+}
+
+fn db_setup() -> sqlite::Result<sqlite::Connection> {
     let path = PathBuf::from(env!("HOME"))
         .join(LIBRARY_PATH)
         .join("metadata_tmp.db");
 
     sqlite::open(path)
+}
+
+#[derive(Serialize)]
+struct TemplateParameter {
+    min_pages: u32,
+    min_words: u32,
+    stats: BTreeMap<&'static str, Stats>,
+}
+
+fn read_stats_from_db() -> BTreeMap<&'static str, Stats> {
+    let db = db_setup().expect("Opening database failed");
+
+    let all = Stats::query_db(&db, "");
+    let read = Stats::query_db(&db, "WHERE read = 1");
+    let read_eng = Stats::query_db(&db, "WHERE lang = 'Eng' AND read = 1");
+    let read_deu = Stats::query_db(&db, "WHERE lang = 'Deu' AND read = 1");
+
+    let read_long = Stats::query_db(&db, "WHERE is_long AND read = 1");
+    let eng_read_long = Stats::query_db(&db, "WHERE lang = 'Eng' AND is_long AND read = 1");
+    let deu_read_long = Stats::query_db(&db, "WHERE lang = 'Deu' AND is_long AND read = 1");
+
+    let read_short = Stats::query_db(&db, "WHERE NOT is_long AND read = 1");
+    let eng_read_short = Stats::query_db(&db, "WHERE lang = 'Eng' AND NOT is_long AND read = 1");
+    let deu_read_short = Stats::query_db(&db, "WHERE lang = 'Deu' AND NOT is_long AND read = 1");
+
+    let mut stats: BTreeMap<_, Stats> = BTreeMap::new();
+    stats.insert("all", all);
+    stats.insert("read", read);
+    stats.insert("read_eng", read_eng);
+    stats.insert("read_deu", read_deu);
+
+    stats.insert("read_long", read_long);
+    stats.insert("eng_read_long", eng_read_long);
+    stats.insert("deu_read_long", deu_read_long);
+
+    stats.insert("read_short", read_short);
+    stats.insert("eng_read_short", eng_read_short);
+    stats.insert("deu_read_short", deu_read_short);
+
+    stats
 }
 
 pub fn main() {
@@ -148,68 +202,17 @@ pub fn main() {
         .register_template_file("markdown", path)
         .expect("Failed to register template");
 
-    let db = setup().expect("Opening database failed");
-
-    let _ = Stats::from_query(&db, "");
-
-    let all = "<all>";
-    let long = "<long>";
-    let short = "<short>";
-
-    let mut data = BTreeMap::new();
-    data.insert("all", all);
-    data.insert("long", long);
-    data.insert("short", short);
+    let param = TemplateParameter {
+        min_pages: MIN_PAGES,
+        min_words: MIN_WORDS,
+        stats: read_stats_from_db(),
+    };
 
     let md = handlebars
-        .render("markdown", &data)
+        .render("markdown", &param)
         .expect("Failed to render template");
     println!("{}", md);
 }
-
-/*
-
-# Construct a query string and execute the query, returning a dataframe without
-# nullable columns
-function query(columns   :: Array{Symbol, 1},
-               condition :: Union{String, Array{String}},
-               group_by  :: Union{String, Array{String}})
-  select = map(x -> column_map[x], columns)
-
-  # Build the query string
-  query_string = "SELECT " * join(select, ", ")
-  query_string *= " FROM " * default_from
-  if !isempty(condition)
-    query_string *= " WHERE " *
-    if typeof(condition) == String
-      condition
-    else
-      join(condition, " AND ")
-    end
-  end
-  if typeof(group_by) != String
-    group_by = join(group_by, ", ")
-  end
-  if !isempty(group_by)
-    query_string *= " GROUP BY " * group_by
-  end
-  query_string *= " ORDER BY languages.lang_code ASC"
-end
-
-query(str::Union{String, Array{String}}) = query(available_columns, str, ["$read.value", "languages.lang_code"])
-query() = query(String[])
-
-
-#
-# Actually query the database
-#
-all_works   = query()
-long_works  = query(is_long_work)
-short_works = query(is_short_work)
-
-english_books = @where(long_works, :lang .== "eng")
-german_books = @where(long_works, :lang .== "deu")
-*/
 
 /*
 # Produce a list of all the txt files of books that I have finished.
