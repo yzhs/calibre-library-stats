@@ -1,18 +1,18 @@
+extern crate atomicwrites;
 extern crate chrono;
-
+extern crate handlebars;
 #[macro_use]
 extern crate serde_derive;
-
-extern crate handlebars;
 extern crate sqlite;
 
 use std::collections::BTreeMap;
 use std::ops::Add;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use chrono::{Local, Timelike};
 
 const LIBRARY_PATH: &str = "books/non-fiction";
+const OUTPUT_PATH: &str = "site/local/content/library.md";
 
 // TODO read the values from the database?
 mod tables {
@@ -182,16 +182,32 @@ fn collect_stats_from_db() -> BTreeMap<&'static str, Stats> {
     stats
 }
 
-pub fn main() {
+fn generate_markdown(template_param: &TemplateParameter) -> String {
     use handlebars::Handlebars;
+
     let mut handlebars = Handlebars::new();
     let path = PathBuf::new()
         .join(env!("CARGO_MANIFEST_DIR"))
         .join("templates/template.md");
+
     handlebars
         .register_template_file("markdown", path)
         .expect("Failed to register template");
 
+    handlebars
+        .render("markdown", template_param)
+        .expect("Failed to render template")
+}
+
+fn save_markdown<P: AsRef<Path>>(path: P, content: &str) {
+    use std::io::Write;
+
+    let af = atomicwrites::AtomicFile::new(path, atomicwrites::AllowOverwrite);
+    af.write(|f| f.write_all(content.as_bytes()))
+        .expect("Failed to write output file");
+}
+
+pub fn main() {
     let param = TemplateParameter {
         now: Local::now().with_nanosecond(0).unwrap().to_rfc3339(),
         min_pages: MIN_PAGES,
@@ -199,8 +215,9 @@ pub fn main() {
         stats: collect_stats_from_db(),
     };
 
-    let md = handlebars
-        .render("markdown", &param)
-        .expect("Failed to render template");
+    let md = generate_markdown(&param);
+    let path = PathBuf::from(env!("HOME")).join(OUTPUT_PATH);
+    save_markdown(path, &md);
+
     println!("{}", md);
 }
