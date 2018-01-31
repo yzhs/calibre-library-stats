@@ -219,39 +219,3 @@ pub fn main() {
         .expect("Failed to render template");
     println!("{}", md);
 }
-
-/*
-# Produce a list of all the txt files of books that I have finished.
-function toarray(df)
-  return convert(Array{String}, map(x -> isnull(x) ? NA : get(x), df))
-end
-query_string = """SELECT path, title, name FROM $read
-LEFT JOIN books ON $read.book = books.id
-LEFT JOIN books_authors_link ON books_authors_link.book = books.id
-LEFT JOIN authors ON books_authors_link.author = authors.id
-;"""
-
-foo = SQLite.query(db, query_string);
-
-library_path = expanduser("~/books/non-fiction/")
-file = open(expanduser("~/prj/library-stats/read_books_list.txt"), "w")
-write(file, )
-for i in 1:size(foo, 1)
-  line = foo[i, :]
-  dir_path = get(line[:path][1])
-  author = normalize_string(get(line[:name][1]), stripmark=true)
-  if !contains(dir_path, author)
-    continue
-  end
-  title = get(line[:title][1])
-  title = replace(title, "…", "_.")
-  title = replace(title, "½", "1_2")
-  title = normalize_string(title, stripmark=true)
-  path = rstrip(title[1:min(42, length(title))]) * " - " * author * ".txt\n"
-  path = replace(path, Set([':' '/' '?']), "_")
-  path = library_path * dir_path * "/" * path
-  print(path)
-  write(file, path)
-end
-close(file)
-*/
