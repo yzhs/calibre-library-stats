@@ -15,11 +15,3 @@ Of these I have read
   * {{stats.eng_read_short.works}} works of less than {{min_words}} words and less than {{min_pages}} pages in English, totalling {{stats.eng_read_short.pages}} pages, and {{stats.eng_read_short.words}} words.
 
 Thus, in total, I have read {{stats.read.works}} works consisting of {{stats.read.works}} pages and {{stats.read.works}} words.
-
-## All languages
-
-| Status    | Books               | Pages               | Words               |
-|:----------|--------------------:|--------------------:|--------------------:|
-| All       | {{stats.what.works}}      | {{stats.what.pages}}      | {{stats.what.words}}      |
-| Read      | {{stats.what.read.works}} | {{stats.what.read.pages}} | {{stats.what.read.words}} |
-| *Percent* | *foo%*              | *foo%*              | *foo%*              |
