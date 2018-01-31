@@ -1,3 +1,5 @@
+extern crate chrono;
+
 #[macro_use]
 extern crate serde_derive;
 
@@ -7,6 +9,8 @@ extern crate sqlite;
 use std::collections::BTreeMap;
 use std::ops::Add;
 use std::path::PathBuf;
+
+use chrono::{Local, Timelike};
 
 const LIBRARY_PATH: &str = "books/non-fiction";
 
@@ -156,6 +160,7 @@ fn db_setup() -> sqlite::Result<sqlite::Connection> {
 struct TemplateParameter {
     min_pages: u32,
     min_words: u32,
+    now: String,
     stats: BTreeMap<&'static str, Stats>,
 }
 
@@ -203,6 +208,7 @@ pub fn main() {
         .expect("Failed to register template");
 
     let param = TemplateParameter {
+        now: Local::now().with_nanosecond(0).unwrap().to_rfc3339(),
         min_pages: MIN_PAGES,
         min_words: MIN_WORDS,
         stats: read_stats_from_db(),
