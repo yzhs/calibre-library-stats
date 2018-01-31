@@ -164,7 +164,7 @@ struct TemplateParameter {
     stats: BTreeMap<&'static str, Stats>,
 }
 
-fn read_stats_from_db() -> BTreeMap<&'static str, Stats> {
+fn collect_stats_from_db() -> BTreeMap<&'static str, Stats> {
     let db = db_setup().expect("Opening database failed");
 
     let all = Stats::query_db(&db, "");
@@ -211,7 +211,7 @@ pub fn main() {
         now: Local::now().with_nanosecond(0).unwrap().to_rfc3339(),
         min_pages: MIN_PAGES,
         min_words: MIN_WORDS,
-        stats: read_stats_from_db(),
+        stats: collect_stats_from_db(),
     };
 
     let md = handlebars
