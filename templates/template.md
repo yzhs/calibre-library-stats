@@ -12,6 +12,7 @@ in works which can be easily counted, e.g. EPUB files, and unreliable –
 mostly too low – word counts of PDF or DJVU files.
 
 Of these I have read
+
   * {{read_long.works}} books, {{read_long.pages}} pages, {{read_long.words}} in total;
   * {{eng_read_long.works}} books, {{eng_read_long.pages}} pages, {{eng_read_long.words}} words in English;
   * {{deu_read_long.works}} books, {{deu_read_long.pages}} pages, {{deu_read_long.words}} words in German; and
