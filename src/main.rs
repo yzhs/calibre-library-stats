@@ -12,7 +12,14 @@ use std::path::{Path, PathBuf};
 use chrono::{Local, Timelike};
 use handlebars::{Handlebars, Helper, JsonRender, RenderContext, RenderError};
 
+// How many words/pages does a work need to count as a book?
+const MIN_WORDS: u32 = 10_000;
+const MIN_PAGES: u32 = 100;
+
+/// This is the directory that contains `metadata.db` (relative to $HOME).
 const LIBRARY_PATH: &str = "books/non-fiction";
+
+/// Put the generated Markdown into this file (relative to $HOME).
 const OUTPUT_PATH: &str = "site/local/content/library.md";
 
 // TODO read the values from the database?
@@ -30,30 +37,8 @@ mod tables {
     pub const LENT_TO: &str = "custom_column_17";
 
     pub const FLESCH_KINCAID_GRADE: &str = "custom_column_8";
-    pub const GUNNING_FOX_INDEX: &str = "custom_column_9";
     pub const FLESCH_READING_EASE: &str = "custom_column_10";
-}
-
-// How many words/pages does a work need to count as a book?
-const MIN_WORDS: u32 = 10_000;
-const MIN_PAGES: u32 = 100;
-
-#[derive(Debug, Serialize)]
-struct Stats {
-    works: u32,
-    pages: u32,
-    words: u64,
-}
-
-impl Add for Stats {
-    type Output = Self;
-    fn add(self, other: Self) -> Self {
-        Stats {
-            works: self.works + other.works,
-            pages: self.pages + other.pages,
-            words: self.words + other.words,
-        }
-    }
+    pub const GUNNING_FOX_INDEX: &str = "custom_column_9";
 }
 
 #[derive(Debug)]
@@ -94,6 +79,34 @@ impl From<Option<i64>> for Read {
     }
 }
 
+#[derive(Debug, Serialize)]
+struct Stats {
+    works: u32,
+    pages: u32,
+    words: u64,
+}
+
+impl Add for Stats {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        Stats {
+            works: self.works + other.works,
+            pages: self.pages + other.pages,
+            words: self.words + other.words,
+        }
+    }
+}
+
+impl std::default::Default for Stats {
+    fn default() -> Self {
+        Stats {
+            works: 0,
+            pages: 0,
+            words: 0,
+        }
+    }
+}
+
 impl Stats {
     fn query_db<S: AsRef<str>>(db: &sqlite::Connection, condition: S) -> Stats {
         let query = format!(
@@ -121,16 +134,6 @@ impl Stats {
         }
 
         result
-    }
-}
-
-impl std::default::Default for Stats {
-    fn default() -> Self {
-        Stats {
-            works: 0,
-            pages: 0,
-            words: 0,
-        }
     }
 }
 
