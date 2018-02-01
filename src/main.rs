@@ -10,6 +10,7 @@ use std::ops::Add;
 use std::path::{Path, PathBuf};
 
 use chrono::{Local, Timelike};
+use handlebars::{Handlebars, Helper, JsonRender, RenderContext, RenderError};
 
 const LIBRARY_PATH: &str = "books/non-fiction";
 const OUTPUT_PATH: &str = "site/local/content/library.md";
@@ -182,7 +183,6 @@ fn collect_stats_from_db() -> BTreeMap<&'static str, Stats> {
     stats
 }
 
-use handlebars::{Handlebars, Helper, JsonRender, RenderContext, RenderError};
 type HelperResult = Result<(), RenderError>;
 
 fn group_digits_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
