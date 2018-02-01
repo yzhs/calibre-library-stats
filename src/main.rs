@@ -41,44 +41,6 @@ mod tables {
     pub const GUNNING_FOX_INDEX: &str = "custom_column_9";
 }
 
-#[derive(Debug)]
-enum Language {
-    Eng,
-    Deu,
-    Jbo,
-    Lat,
-}
-
-impl<'a> From<&'a str> for Language {
-    fn from(name: &'a str) -> Self {
-        match name {
-            "eng" => Language::Eng,
-            "deu" => Language::Deu,
-            "jbo" => Language::Jbo,
-            "lat" => Language::Lat,
-            _ => unimplemented!(),
-        }
-    }
-}
-
-#[derive(Debug)]
-enum Read {
-    Yes,
-    OtherLanguage,
-    No,
-}
-
-impl From<Option<i64>> for Read {
-    fn from(value: Option<i64>) -> Self {
-        match value {
-            Some(0) => Read::OtherLanguage,
-            Some(1) => Read::Yes,
-            None => Read::No,
-            Some(_) => unimplemented!(),
-        }
-    }
-}
-
 #[derive(Debug, Serialize)]
 struct Stats {
     works: u32,
