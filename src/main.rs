@@ -23,6 +23,7 @@ const LIBRARY_PATH: &str = "books/non-fiction";
 const OUTPUT_PATH: &str = "site/local/content/library.md";
 
 // TODO read the values from the database?
+/// Table names corresponding to the custom columns in my Calibre library.
 mod tables {
     #![allow(unused)]
 
