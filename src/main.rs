@@ -189,13 +189,11 @@ fn collect_stats_from_db() -> BTreeMap<&'static str, Stats> {
 type HelperResult = Result<(), RenderError>;
 
 fn group_digits_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
-    let param = h.param(0).unwrap();
-
-    let digits = param.value().render();
+    let digits = h.param(0).expect("Parameter missing").value().render();
 
     let len = digits.len();
     let result = if len <= 4 {
-        digits.into()
+        digits
     } else {
         let mut tmp = "".to_owned();
         let mut i = len;
@@ -209,7 +207,7 @@ fn group_digits_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> He
         tmp
     };
 
-    try!(rc.writer.write(result.into_bytes().as_ref()));
+    try!(rc.writer.write_all(result.into_bytes().as_ref()));
     Ok(())
 }
 
