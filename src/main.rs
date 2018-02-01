@@ -212,14 +212,10 @@ fn group_digits_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> He
 }
 
 fn generate_markdown(template_param: &TemplateParameter) -> String {
-    //use std::boxed::Box;
     let mut handlebars = Handlebars::new();
-    let path = PathBuf::new()
-        .join(env!("CARGO_MANIFEST_DIR"))
-        .join("templates/template.md");
 
     handlebars
-        .register_template_file("markdown", path)
+        .register_template_string("markdown", include_str!("../templates/template.md"))
         .expect("Failed to register template");
 
     handlebars.register_helper("group-digits", Box::new(group_digits_helper));
