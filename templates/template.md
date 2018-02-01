@@ -5,18 +5,18 @@ description = "A brief analysis of my book collection"
 title = "Library statistics"
 +++
 
-{{#with stats}}My library currently contains a total of {{all.works}} pieces of writing (novels,
-novellas, short stories, text books, etc.) with an estimated {{all.pages}} pages.
-These contain more then {{all.words}} words.  That includes the number of words
+{{#with stats}}My library currently contains a total of {{group-digits all.works}} pieces of writing (novels,
+novellas, short stories, text books, etc.) with an estimated {{group-digits all.pages}} pages.
+These contain more then {{group-digits all.words}} words.  That includes the number of words
 in works which can be easily counted, e.g. EPUB files, and unreliable –
 mostly too low – word counts of PDF or DJVU files.
 
 Of these I have read
 
-  * {{read_long.works}} books, {{read_long.pages}} pages, {{read_long.words}} in total;
-  * {{eng_read_long.works}} books, {{eng_read_long.pages}} pages, {{eng_read_long.words}} words in English;
-  * {{deu_read_long.works}} books, {{deu_read_long.pages}} pages, {{deu_read_long.words}} words in German; and
-  * {{eng_read_short.works}}{{/with}} works of less than {{min_words}} words and less than {{min_pages}} pages in English,
-    totalling {{#with stats}}{{eng_read_short.pages}} pages, and {{eng_read_short.words}} words.
+  * {{group-digits read_long.works}} books, {{group-digits read_long.pages}} pages, {{group-digits read_long.words}} in total;
+  * {{group-digits eng_read_long.works}} books, {{group-digits eng_read_long.pages}} pages, {{group-digits eng_read_long.words}} words in English;
+  * {{group-digits deu_read_long.works}} books, {{group-digits deu_read_long.pages}} pages, {{group-digits deu_read_long.words}} words in German; and
+  * {{group-digits eng_read_short.works}}{{/with}} works of less than {{group-digits min_words}} words and less than {{group-digits min_pages}} pages in English,
+    totalling {{#with stats}}{{group-digits eng_read_short.pages}} pages, and {{group-digits eng_read_short.words}} words.
 
-Thus, in total, I have read {{read.works}} works consisting of {{read.pages}} pages and {{read.words}} words.{{/with}}
+Thus, in total, I have read {{group-digits read.works}} works consisting of {{group-digits read.pages}} pages and {{group-digits read.words}} words.{{/with}}

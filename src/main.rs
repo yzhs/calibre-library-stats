@@ -182,9 +182,36 @@ fn collect_stats_from_db() -> BTreeMap<&'static str, Stats> {
     stats
 }
 
-fn generate_markdown(template_param: &TemplateParameter) -> String {
-    use handlebars::Handlebars;
+use handlebars::{Handlebars, Helper, JsonRender, RenderContext, RenderError};
+type HelperResult = Result<(), RenderError>;
 
+fn group_digits_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
+    let param = h.param(0).unwrap();
+
+    let digits = param.value().render();
+
+    let len = digits.len();
+    let result = if len <= 4 {
+        digits.into()
+    } else {
+        let mut tmp = "".to_owned();
+        let mut i = len;
+        for d in digits.chars() {
+            if i % 3 == 0 && i != len {
+                tmp.push('\u{202F}'); // Narrow no-break space
+            }
+            tmp.push(d);
+            i -= 1;
+        }
+        tmp
+    };
+
+    try!(rc.writer.write(result.into_bytes().as_ref()));
+    Ok(())
+}
+
+fn generate_markdown(template_param: &TemplateParameter) -> String {
+    //use std::boxed::Box;
     let mut handlebars = Handlebars::new();
     let path = PathBuf::new()
         .join(env!("CARGO_MANIFEST_DIR"))
@@ -193,6 +220,8 @@ fn generate_markdown(template_param: &TemplateParameter) -> String {
     handlebars
         .register_template_file("markdown", path)
         .expect("Failed to register template");
+
+    handlebars.register_helper("group-digits", Box::new(group_digits_helper));
 
     handlebars
         .render("markdown", template_param)
