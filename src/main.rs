@@ -154,16 +154,16 @@ fn collect_stats_from_db() -> BTreeMap<&'static str, Stats> {
 
     let all = Stats::query_db(&db, "");
     let read = Stats::query_db(&db, "WHERE read = 1");
-    let read_eng = Stats::query_db(&db, "WHERE lang = 'Eng' AND read = 1");
-    let read_deu = Stats::query_db(&db, "WHERE lang = 'Deu' AND read = 1");
+    let read_eng = Stats::query_db(&db, "WHERE lang = 'eng' AND read = 1");
+    let read_deu = Stats::query_db(&db, "WHERE lang = 'deu' AND read = 1");
 
     let read_long = Stats::query_db(&db, "WHERE is_long AND read = 1");
-    let eng_read_long = Stats::query_db(&db, "WHERE lang = 'Eng' AND is_long AND read = 1");
-    let deu_read_long = Stats::query_db(&db, "WHERE lang = 'Deu' AND is_long AND read = 1");
+    let eng_read_long = Stats::query_db(&db, "WHERE lang = 'eng' AND is_long AND read = 1");
+    let deu_read_long = Stats::query_db(&db, "WHERE lang = 'deu' AND is_long AND read = 1");
 
     let read_short = Stats::query_db(&db, "WHERE NOT is_long AND read = 1");
-    let eng_read_short = Stats::query_db(&db, "WHERE lang = 'Eng' AND NOT is_long AND read = 1");
-    let deu_read_short = Stats::query_db(&db, "WHERE lang = 'Deu' AND NOT is_long AND read = 1");
+    let eng_read_short = Stats::query_db(&db, "WHERE lang = 'eng' AND NOT is_long AND read = 1");
+    let deu_read_short = Stats::query_db(&db, "WHERE lang = 'deu' AND NOT is_long AND read = 1");
 
     let mut stats: BTreeMap<_, Stats> = BTreeMap::new();
     stats.insert("all", all);
