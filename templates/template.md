@@ -19,4 +19,4 @@ Of these I have read
   * {{eng_read_short.works}}{{/with}} works of less than {{min_words}} words and less than {{min_pages}} pages in English,
     totalling {{#with stats}}{{eng_read_short.pages}} pages, and {{eng_read_short.words}} words.
 
-Thus, in total, I have read {{read.works}} works consisting of {{read.works}} pages and {{read.works}} words.{{/with}}
+Thus, in total, I have read {{read.works}} works consisting of {{read.pages}} pages and {{read.words}} words.{{/with}}
