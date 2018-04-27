@@ -103,7 +103,7 @@ impl Stats {
 fn db_setup() -> sqlite::Result<sqlite::Connection> {
     let path = PathBuf::from(env!("HOME"))
         .join(LIBRARY_PATH)
-        .join("metadata_tmp.db");
+        .join("metadata.db");
 
     sqlite::open(path)
 }
