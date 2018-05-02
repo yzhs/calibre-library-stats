@@ -36,6 +36,7 @@ mod tables {
     pub const FINISHED: &str = "custom_column_13";
 
     pub const SHELF: &str = "custom_column_15";
+    pub const SHELF_BOOK_LINK: &str = "books_custom_column_15_link";
     pub const LENT_TO: &str = "custom_column_17";
 
     pub const FLESCH_KINCAID_GRADE: &str = "custom_column_8";
@@ -201,6 +202,7 @@ struct Range {
     title: String,
     started: Option<NaiveDateTime>,
     finished: Option<NaiveDateTime>,
+    is_fiction: bool,
 }
 
 fn reading_periods() -> Vec<Range> {
@@ -209,7 +211,9 @@ fn reading_periods() -> Vec<Range> {
     let query = format!(
         include_str!("ranges.sql"),
         started = tables::STARTED,
-        finished = tables::FINISHED
+        finished = tables::FINISHED,
+        shelf = tables::SHELF,
+        shelf_book_link = tables::SHELF_BOOK_LINK
     );
 
     let mut cursor = db.prepare(query)
@@ -229,6 +233,7 @@ fn reading_periods() -> Vec<Range> {
                 .as_string()
                 .and_then(|x| if x == "NA" { None } else { Some(x) })
                 .and_then(|s| NaiveDateTime::parse_from_str(s, "%F %T%.6f%:z").ok()),
+            is_fiction: row[3].as_integer().map(|x| x == 1).unwrap_or(true),
         };
         result.push(range);
     }
@@ -244,12 +249,12 @@ fn write_ranges<P: AsRef<Path>>(path: P, ranges: &[Range]) -> Result<(), std::io
     use std::fs::File;
     let mut f = File::create(path)?;
 
-    writeln!(f, "\"Title\",\"Start\",\"End\"")?;
+    writeln!(f, "\"Title\",\"Start\",\"End\",\"IsFiction\"")?;
 
     for range in ranges {
         writeln!(
             f,
-            "\"{}\",{},{}",
+            "\"{}\",{},{},{}",
             range.title,
             range
                 .started
@@ -258,7 +263,8 @@ fn write_ranges<P: AsRef<Path>>(path: P, ranges: &[Range]) -> Result<(), std::io
             range
                 .finished
                 .map(format_datetime)
-                .unwrap_or_else(|| "NA".to_string())
+                .unwrap_or_else(|| "NA".to_string()),
+            range.is_fiction,
         )?;
     }
 
