@@ -203,6 +203,7 @@ struct Range {
     started: Option<NaiveDateTime>,
     finished: Option<NaiveDateTime>,
     is_fiction: bool,
+    words: i64,
 }
 
 fn reading_periods() -> Vec<Range> {
@@ -213,7 +214,8 @@ fn reading_periods() -> Vec<Range> {
         started = tables::STARTED,
         finished = tables::FINISHED,
         shelf = tables::SHELF,
-        shelf_book_link = tables::SHELF_BOOK_LINK
+        shelf_book_link = tables::SHELF_BOOK_LINK,
+        words = tables::WORDS,
     );
 
     let mut cursor = db.prepare(query)
@@ -234,6 +236,7 @@ fn reading_periods() -> Vec<Range> {
                 .and_then(|x| if x == "NA" { None } else { Some(x) })
                 .and_then(|s| NaiveDateTime::parse_from_str(s, "%F %T%.6f%:z").ok()),
             is_fiction: row[3].as_integer().map(|x| x == 1).unwrap_or(true),
+            words: row[4].as_integer().unwrap_or(0),
         };
         result.push(range);
     }
@@ -249,12 +252,12 @@ fn write_ranges<P: AsRef<Path>>(path: P, ranges: &[Range]) -> Result<(), std::io
     use std::fs::File;
     let mut f = File::create(path)?;
 
-    writeln!(f, "\"Title\",\"Start\",\"End\",\"IsFiction\"")?;
+    writeln!(f, "\"title\",\"start\",\"end\",\"is_fiction\",\"words\"")?;
 
     for range in ranges {
         writeln!(
             f,
-            "\"{}\",{},{},{}",
+            "\"{}\",{},{},{},{}",
             range.title,
             range
                 .started
@@ -265,6 +268,7 @@ fn write_ranges<P: AsRef<Path>>(path: P, ranges: &[Range]) -> Result<(), std::io
                 .map(format_datetime)
                 .unwrap_or_else(|| "NA".to_string()),
             range.is_fiction,
+            range.words,
         )?;
     }
 
