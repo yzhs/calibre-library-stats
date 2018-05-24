@@ -10,7 +10,7 @@ use std::io::Write;
 use std::ops::Add;
 use std::path::{Path, PathBuf};
 
-use chrono::{Local, NaiveDateTime, Timelike};
+use chrono::{Local, Timelike};
 use handlebars::{Handlebars, Helper, JsonRender, RenderContext, RenderError};
 
 // How many words/pages does a work need to count as a book?
@@ -196,85 +196,6 @@ fn write_file<P: AsRef<Path>>(path: P, content: &str) {
         .expect("Failed to write output file");
 }
 
-#[derive(Debug)]
-struct Range {
-    authors: String,
-    title: String,
-    started: Option<NaiveDateTime>,
-    finished: Option<NaiveDateTime>,
-    is_fiction: bool,
-    words: i64,
-}
-
-fn reading_periods() -> Vec<Range> {
-    let db = db_setup().expect("Opening database failed");
-
-    let query = format!(
-        include_str!("ranges.sql"),
-        started = tables::STARTED,
-        finished = tables::FINISHED,
-        shelf = tables::SHELF,
-        shelf_book_link = tables::SHELF_BOOK_LINK,
-        words = tables::WORDS,
-    );
-
-    let mut cursor = db.prepare(query)
-        .expect("Failed to prepare statement")
-        .cursor();
-
-    let mut result = vec![];
-    while let Some(row) = cursor.next().expect("SQL error") {
-        let range = Range {
-            title: row[0].as_string().unwrap_or("NA").to_string(),
-            authors: "".to_string(),
-            started: row[1]
-                .as_string()
-                .and_then(|x| if x == "NA" { None } else { Some(x) })
-                .and_then(|s| NaiveDateTime::parse_from_str(s, "%F %T%.6f%:z").ok()),
-            finished: row[2]
-                .as_string()
-                .and_then(|x| if x == "NA" { None } else { Some(x) })
-                .and_then(|s| NaiveDateTime::parse_from_str(s, "%F %T%.6f%:z").ok()),
-            is_fiction: row[3].as_integer().map(|x| x == 1).unwrap_or(true),
-            words: row[4].as_integer().unwrap_or(0),
-        };
-        result.push(range);
-    }
-
-    result
-}
-
-fn format_datetime(dt: NaiveDateTime) -> String {
-    dt.format("%Y-%m-%d %H:%M:%S").to_string()
-}
-
-fn write_ranges<P: AsRef<Path>>(path: P, ranges: &[Range]) -> Result<(), std::io::Error> {
-    use std::fs::File;
-    let mut f = File::create(path)?;
-
-    writeln!(f, "\"title\",\"start\",\"end\",\"is_fiction\",\"words\"")?;
-
-    for range in ranges {
-        writeln!(
-            f,
-            "\"{}\",{},{},{},{}",
-            range.title,
-            range
-                .started
-                .map(format_datetime)
-                .unwrap_or_else(|| "NA".to_string()),
-            range
-                .finished
-                .map(format_datetime)
-                .unwrap_or_else(|| "NA".to_string()),
-            range.is_fiction,
-            range.words,
-        )?;
-    }
-
-    Ok(())
-}
-
 pub fn main() {
     let param = TemplateParameter {
         now: Local::now().with_nanosecond(0).unwrap().to_rfc3339(),
@@ -289,7 +210,4 @@ pub fn main() {
     write_file(path, &md);
 
     println!("{}", md);
-
-    let ranges = reading_periods();
-    write_ranges("ranges.csv", &ranges).expect("Failed to write CSV file");
 }
