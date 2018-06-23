@@ -5,6 +5,7 @@ from os.path import expanduser
 import altair as alt
 import numpy as np
 import pandas as pd
+from scipy.stats.stats import pearsonr
 import sqlite3
 
 # %matplotlib inline
@@ -60,7 +61,7 @@ def get_data(library_paths=[expanduser('~/books/non-fiction/')]):
         SELECT
             title,
             author_sort AS author,
-            --series.name AS series,
+            series.name AS series,
             series_index,
             pubdate,
             timestamp,
@@ -70,6 +71,9 @@ def get_data(library_paths=[expanduser('~/books/non-fiction/')]):
             {tbl('finished')}.value AS end,
             {tbl('words')}.value AS words,
             {tbl('pages')}.value AS pages,
+            {tbl('fre')}.value AS fre,
+            {tbl('fkg')}.value AS fkg,
+            {tbl('gfi')}.value AS gfi,
             ({tbl('shelf')}.value = 'Fiction') AS is_fiction,
             ifnull({tbl('read')}.value, 0) AS is_read
         FROM books
@@ -85,6 +89,12 @@ def get_data(library_paths=[expanduser('~/books/non-fiction/')]):
             ON {tbl('pages')}.book = books.id
         LEFT OUTER JOIN {tbl('words')}
             ON {tbl('words')}.book = books.id
+        LEFT OUTER JOIN {tbl('fre')}
+            ON {tbl('fre')}.book = books.id
+        LEFT OUTER JOIN {tbl('fkg')}
+            ON {tbl('fkg')}.book = books.id
+        LEFT OUTER JOIN {tbl('gfi')}
+            ON {tbl('gfi')}.book = books.id
         JOIN books_{tbl('shelf')}_link
             ON books_{tbl('shelf')}_link.book = books.id
         JOIN {tbl('shelf')}
@@ -425,6 +435,18 @@ def plot_pubdate(df, output='pubdate.html'):
     ((years + years_nonfiction) & (months | days)).save(output_dir + output)
 
 
+def reading_ease(df):
+    output = 'reading_ease.html'
+    opacity = 0.2
+    df = df[df.fre.notna() & df.fkg.notna() & df.gfi.notna()]
+    color = alt.Color('is_fiction', scale=fiction_scale)
+    a = alt.Chart(df).mark_point(opacity=opacity) \
+        .encode(x='fre', y='fkg', color=color)
+    b = alt.Chart(df).mark_point(opacity=opacity) \
+        .encode(x='fre', y='gfi', color=color)
+    (a | b).save(output_dir + output)
+
+
 df = get_data()
 avg_words_per_page = df.words.sum() / df.pages[df.words.notna()].sum()
 
@@ -449,3 +471,10 @@ chart = alt.Chart(table) \
             x='is_read',
             y='words',
             color='language')
+
+ease_df = df[df.fre.notna() & df.fkg.notna() & df.gfi.notna()]
+cor_fre_fkg = pearsonr(ease_df.fre, ease_df.fkg)
+cor_fre_gfi = pearsonr(ease_df.fre, ease_df.gfi)
+cor_fkg_gfi = pearsonr(ease_df.fkg, ease_df.gfi)
+
+reading_ease(df)
