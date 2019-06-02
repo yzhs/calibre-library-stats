@@ -1,6 +1,6 @@
 +++
 author = "Colin Benner"
-date = "{{now}}"
+date = {{now}}
 description = "A brief analysis of my book collection"
 title = "Library statistics"
 +++
