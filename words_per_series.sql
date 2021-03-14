@@ -6,7 +6,8 @@ SELECT
   SUM(custom_column_6.value) AS pages,
   SUM(ifnull(custom_column_5.value, 0)) AS words,
   authors.name as author,
-  series.name as series
+  series.name as series,
+  CASE WHEN series.name is null THEN books.title ELSE null end as title
 FROM books
 JOIN books_languages_link ON books.id = books_languages_link.book
 LEFT OUTER JOIN books_series_link    ON books.id = books_series_link.book
@@ -17,5 +18,5 @@ LEFT OUTER JOIN custom_column_11 ON books.id = custom_column_11.book
 LEFT OUTER JOIN custom_column_5  ON books.id = custom_column_5.book
 JOIN authors ON books_authors_link.author = authors.id
 LEFT OUTER JOIN series ON books_series_link.series = series.id
-group by author, series.name
+group by author, ifnull(series, title)
 order by words desc
