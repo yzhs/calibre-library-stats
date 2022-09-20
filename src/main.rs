@@ -84,7 +84,8 @@ impl Stats {
             condition = condition.as_ref()
         );
 
-        let mut cursor = db.prepare(query)
+        let mut cursor = db
+            .prepare(query)
             .expect("Failed to prepare statement")
             .cursor();
 
@@ -172,7 +173,7 @@ fn group_digits_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> He
         tmp
     };
 
-    try!(rc.writer.write_all(result.into_bytes().as_ref()));
+    rc.writer.write_all(result.into_bytes().as_ref())?;
     Ok(())
 }
 
