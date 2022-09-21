@@ -11,7 +11,7 @@ use std::ops::Add;
 use std::path::{Path, PathBuf};
 
 use chrono::{Local, Timelike};
-use handlebars::{Handlebars, Helper, JsonRender, RenderContext, RenderError};
+use handlebars::{Context, Handlebars, Helper, JsonRender, Output, RenderContext, RenderError};
 
 // How many words/pages does a work need to count as a book?
 const MIN_WORDS: u32 = 10_000;
@@ -155,7 +155,13 @@ fn collect_stats_from_db() -> BTreeMap<&'static str, Stats> {
 
 type HelperResult = Result<(), RenderError>;
 
-fn group_digits_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
+fn group_digits_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
     let digits = h.param(0).expect("Parameter missing").value().render();
 
     let len = digits.len();
@@ -174,7 +180,7 @@ fn group_digits_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> He
         tmp
     };
 
-    rc.writer.write_all(result.into_bytes().as_ref())?;
+    out.write(&result)?;
     Ok(())
 }
 
