@@ -84,17 +84,18 @@ impl Stats {
             condition = condition.as_ref()
         );
 
-        let mut cursor = db
+        let cursor = db
             .prepare(query)
             .expect("Failed to prepare statement")
-            .cursor();
+            .into_cursor();
 
         let mut result = Default::default();
-        while let Some(row) = cursor.next().expect("SQL error") {
+        for row_result in cursor {
+            let row = row_result.unwrap();
             let stats = Stats {
-                works: row[3].as_integer().unwrap() as u32,
-                pages: row[4].as_integer().unwrap() as u32,
-                words: row[5].as_integer().unwrap() as u64,
+                works: row.get::<i64, _>(3) as u32,
+                pages: row.get::<i64, _>(4) as u32,
+                words: row.get::<i64, _>(5) as u64,
             };
             result = result + stats;
         }
