@@ -18,7 +18,7 @@ const MIN_WORDS: u32 = 10_000;
 const MIN_PAGES: u32 = 100;
 
 /// This is the directory that contains `metadata.db` (relative to $HOME).
-const LIBRARY_PATH: &str = "books/non-fiction";
+const LIBRARY_PATH: &str = "books/library";
 
 /// Put the generated Markdown into this file (relative to $HOME).
 const OUTPUT_PATH: &str = "site/local/content/library.md";

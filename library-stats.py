@@ -22,7 +22,7 @@ day = np.timedelta64(1, 'D')
 fiction_scale = alt.Scale(domain=[True, False])
 
 
-def get_data(library_paths=[expanduser('~/books/non-fiction/')]):
+def get_data(library_paths=[expanduser('~/books/library/')]):
     db_path = library_paths[0] + 'metadata.db'
     conn = sqlite3.connect(db_path)
 
