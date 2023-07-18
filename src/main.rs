@@ -87,15 +87,15 @@ impl Stats {
         let cursor = db
             .prepare(query)
             .expect("Failed to prepare statement")
-            .into_cursor();
+            .into_iter();
 
         let mut result = Default::default();
         for row_result in cursor {
             let row = row_result.unwrap();
             let stats = Stats {
-                works: row.get::<i64, _>(3) as u32,
-                pages: row.get::<i64, _>(4) as u32,
-                words: row.get::<i64, _>(5) as u64,
+                works: row.read::<i64, _>(3) as u32,
+                pages: row.read::<i64, _>(4) as u32,
+                words: row.read::<i64, _>(5) as u64,
             };
             result = result + stats;
         }
